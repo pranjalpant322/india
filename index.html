@@ -3,201 +3,297 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title id="tab-title">Cafe Ordering System</title>
+    <title>Brew & Bite | Professional Cafe System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f9fafb; }
-        .hidden { display: none; }
-        .active-tab { border-bottom: 2px solid #f8b400; color: #f8b400; }
-        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+        :root { --accent: #F8B400; --dark: #121212; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fcfcfc; color: #1a1a1a; }
+        .hidden { display: none !important; }
+        .glass-morphism { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(12px); border: 1px solid rgba(0,0,0,0.05); }
+        .sidebar-active { border-right: 4px solid var(--accent); background: rgba(248, 180, 0, 0.05); color: var(--accent); }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+        .animate-pop { animation: pop 0.3s ease-out; }
+        @keyframes pop { 0% { transform: scale(0.95); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
-<body>
+<body class="antialiased">
 
-    <div id="entry-screen" class="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-3xl max-w-sm w-full shadow-2xl">
-            <div id="preview-logo-entry" class="w-20 h-20 bg-orange-100 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl">☕</div>
-            <h2 class="text-2xl font-bold text-center mb-6" id="entry-cafe-name">Brew & Bite Cafe</h2>
-            <input type="text" id="cust-name" placeholder="Enter Your Name" class="w-full p-4 border rounded-2xl mb-4 outline-none focus:ring-2 ring-orange-400">
-            <input type="number" id="cust-table" placeholder="Table Number" class="w-full p-4 border rounded-2xl mb-6 outline-none focus:ring-2 ring-orange-400">
-            <button onclick="initCustomer()" class="w-full bg-black text-white py-4 rounded-2xl font-bold hover:bg-zinc-800 transition">Start Ordering</button>
-        </div>
-    </div>
-
-    <div id="pin-modal" class="fixed inset-0 bg-black/60 z-[300] hidden flex items-center justify-center">
-        <div class="bg-white p-6 rounded-3xl w-80 shadow-2xl">
-            <h3 class="text-center font-bold mb-4">Staff Security PIN</h3>
-            <input type="password" id="pin-input" placeholder="••••" class="w-full text-center text-3xl tracking-widest p-3 border-b-2 mb-4 outline-none">
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="closeModal('pin-modal')" class="p-3 bg-gray-100 rounded-xl">Cancel</button>
-                <button onclick="checkPin()" class="p-3 bg-orange-400 text-black font-bold rounded-xl">Unlock</button>
+    <div id="entry-layer" class="fixed inset-0 bg-zinc-900 z-[1000] flex items-center justify-center p-6">
+        <div class="bg-white p-10 rounded-[2.5rem] max-w-md w-full shadow-2xl text-center">
+            <div id="entry-logo-container" class="w-24 h-24 bg-orange-50 rounded-full mx-auto mb-6 flex items-center justify-center overflow-hidden">
+                <span id="entry-default-icon" class="text-4xl">☕</span>
+                <img id="entry-img-logo" src="" class="hidden w-full h-full object-cover">
+            </div>
+            <h2 id="entry-title" class="text-3xl font-bold mb-2">Brew & Bite</h2>
+            <p class="text-gray-400 text-sm mb-8">Welcome! Please provide your details.</p>
+            <div class="space-y-4">
+                <input type="text" id="user-name" placeholder="Full Name" class="w-full p-4 bg-gray-50 border-none rounded-2xl outline-none focus:ring-2 ring-orange-400 transition-all">
+                <input type="number" id="table-no" placeholder="Table Number" class="w-full p-4 bg-gray-50 border-none rounded-2xl outline-none focus:ring-2 ring-orange-400 transition-all">
+                <button onclick="accessCafe()" class="w-full bg-zinc-900 text-white py-4 rounded-2xl font-bold text-lg hover:bg-black transition-all shadow-lg shadow-zinc-200">Start Dining</button>
             </div>
         </div>
     </div>
 
-    <header class="bg-zinc-900 text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-xl">
-        <div class="flex items-center gap-3">
-            <img id="main-logo" src="" class="w-10 h-10 rounded-full hidden">
-            <div id="fallback-icon" class="text-2xl">☕</div>
-            <h1 id="header-name" class="font-bold text-lg tracking-tight uppercase text-orange-400">Brew & Bite Cafe</h1>
-        </div>
-        <button onclick="showPinModal()" class="bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-zinc-700">STAFF PORTAL</button>
-    </header>
-
-    <main id="customer-ui" class="max-w-6xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="lg:col-span-2">
-            <div class="flex items-center gap-2 mb-8">
-                <div class="w-1.5 h-8 bg-orange-400 rounded-full"></div>
-                <h2 class="text-3xl font-bold">Explore Menu</h2>
+    <div id="payment-modal" class="fixed inset-0 bg-black/70 z-[1100] hidden flex items-center justify-center p-6">
+        <div class="bg-white rounded-[2rem] max-w-sm w-full p-8 text-center animate-pop">
+            <h3 class="text-xl font-bold mb-4">Complete Payment</h3>
+            <div id="qr-container" class="bg-gray-100 aspect-square rounded-2xl mb-6 flex items-center justify-center border-2 border-dashed border-gray-300">
+                <div class="text-center">
+                    <p class="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-2">Scan to Pay</p>
+                    <img id="upi-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=cafe@upi&pn=Cafe&am=0" class="w-40 h-40 mx-auto">
+                </div>
             </div>
-            <div id="menu-display" class="space-y-8">
-                </div>
+            <p class="text-sm text-gray-500 mb-6">Order will be processed after payment verification.</p>
+            <button onclick="closePayment()" class="w-full bg-orange-400 text-black py-4 rounded-2xl font-bold">Done, Placed Order</button>
         </div>
+    </div>
 
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-3xl shadow-xl sticky top-24 overflow-hidden border border-gray-100">
-                <div class="p-5 bg-zinc-50 border-b flex justify-between items-center">
-                    <h3 class="font-bold text-zinc-800">Your Order</h3>
-                    <span id="cart-count" class="bg-black text-white text-xs px-2 py-1 rounded-full">0</span>
+    <div id="staff-auth" class="fixed inset-0 bg-black/40 z-[1200] hidden flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white p-8 rounded-[2rem] w-80 shadow-2xl border border-gray-100">
+            <div class="w-12 h-12 bg-zinc-900 text-white rounded-xl flex items-center justify-center mx-auto mb-4 italic font-bold text-xl">S</div>
+            <h3 class="text-center font-bold text-lg mb-6">Admin Verification</h3>
+            <input type="password" id="admin-pin" placeholder="••••" class="w-full text-center text-4xl tracking-[0.5em] font-bold border-b-2 border-orange-400 mb-8 outline-none pb-2">
+            <div class="grid grid-cols-2 gap-3">
+                <button onclick="hideStaffAuth()" class="py-3 bg-gray-100 rounded-xl font-semibold text-gray-500">Cancel</button>
+                <button onclick="loginAdmin()" class="py-3 bg-orange-400 text-black rounded-xl font-bold shadow-md shadow-orange-100">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-wrapper" class="min-h-screen flex flex-col">
+        
+        <header class="bg-white border-b px-6 py-4 flex justify-between items-center sticky top-0 z-[500]">
+            <div class="flex items-center gap-4">
+                <div class="w-10 h-10 rounded-full bg-zinc-900 flex items-center justify-center overflow-hidden border">
+                    <span id="header-icon-fallback" class="text-lg">☕</span>
+                    <img id="header-logo" src="" class="hidden w-full h-full object-cover">
                 </div>
-                <div id="cart-list" class="p-6 min-h-[150px] space-y-4">
-                    <p class="text-gray-400 text-center py-10">Cart is empty</p>
+                <div>
+                    <h1 id="brand-name" class="font-bold text-lg leading-tight">Brew & Bite</h1>
+                    <p id="user-info-tag" class="text-[10px] uppercase font-bold text-orange-500 tracking-widest"></p>
                 </div>
-                <div id="cart-summary" class="p-6 bg-zinc-50 border-t hidden">
-                    <div class="flex justify-between mb-4 font-bold text-xl text-zinc-900">
-                        <span>Total</span>
-                        <span id="total-price">₹0</span>
+            </div>
+            <button onclick="showStaffAuth()" class="p-2 px-4 bg-zinc-50 border rounded-xl text-[10px] font-bold tracking-wider hover:bg-zinc-100 transition">STAFF PORTAL</button>
+        </header>
+
+        <main id="customer-view" class="flex-1 max-w-7xl mx-auto w-full p-6 grid grid-cols-1 lg:grid-cols-4 gap-10">
+            
+            <nav id="cat-nav" class="lg:col-span-1 space-y-2 hidden lg:block">
+                <h4 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Categories</h4>
+                <div id="nav-list" class="flex flex-col gap-1">
                     </div>
-                    
-                    <div class="space-y-3">
-                        <p class="text-xs font-bold text-gray-400 uppercase">Payment Method</p>
-                        <div class="grid grid-cols-2 gap-2">
-                            <button onclick="setPayment('UPI')" id="pay-upi" class="p-3 border-2 rounded-xl text-sm font-bold border-orange-400 bg-orange-50">UPI / QR</button>
-                            <button onclick="setPayment('CASH')" id="pay-cash" class="p-3 border-2 rounded-xl text-sm font-bold border-gray-200">Cash</button>
+            </nav>
+
+            <section class="lg:col-span-2">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-3xl font-bold tracking-tight">Today's Menu</h2>
+                    <div class="bg-zinc-100 p-1 rounded-lg flex gap-1">
+                        <button class="px-3 py-1 bg-white rounded-md shadow-sm text-xs font-bold">All</button>
+                        <button class="px-3 py-1 text-xs font-bold text-gray-400">Veg</button>
+                    </div>
+                </div>
+                <div id="menu-grid" class="space-y-10">
+                    </div>
+            </section>
+
+            <aside class="lg:col-span-1">
+                <div class="bg-white rounded-[2rem] shadow-xl border border-gray-50 overflow-hidden sticky top-28">
+                    <div class="p-6 bg-zinc-900 text-white flex justify-between items-center">
+                        <h3 class="font-bold text-sm tracking-widest uppercase">My Tray</h3>
+                        <span id="tray-count" class="bg-orange-400 text-black px-2 py-0.5 rounded-full text-[10px] font-black">0</span>
+                    </div>
+                    <div id="tray-list" class="p-6 max-h-[350px] overflow-y-auto custom-scroll min-h-[150px]">
+                        <div class="text-center py-10">
+                            <div class="text-4xl opacity-20 mb-2">🍽️</div>
+                            <p class="text-gray-400 text-sm italic">Nothing selected yet...</p>
                         </div>
-                        <button onclick="submitOrder()" class="w-full bg-orange-400 py-4 rounded-2xl font-bold text-black mt-4 shadow-lg shadow-orange-100">Confirm Order</button>
+                    </div>
+                    <div id="tray-summary" class="p-6 bg-zinc-50 border-t hidden">
+                        <div class="flex justify-between items-end mb-6">
+                            <span class="text-gray-400 text-sm font-medium">Subtotal</span>
+                            <span id="tray-total" class="text-2xl font-black">₹0</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-2 gap-2 bg-white p-1 rounded-xl border">
+                                <button onclick="setPay('UPI')" id="btn-upi" class="py-2 rounded-lg text-xs font-bold bg-zinc-900 text-white shadow-md">UPI</button>
+                                <button onclick="setPay('CASH')" id="btn-cash" class="py-2 rounded-lg text-xs font-bold text-gray-400">CASH</button>
+                            </div>
+                            <button onclick="checkout()" class="w-full bg-orange-400 text-black py-4 rounded-2xl font-bold shadow-lg shadow-orange-100 hover:scale-[1.02] active:scale-[0.98] transition">Confirm Order</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    </main>
+            </aside>
+        </main>
 
-    <main id="staff-ui" class="max-w-6xl mx-auto p-4 md:p-8 hidden">
-        <div class="flex flex-wrap gap-6 mb-8 border-b">
-            <button onclick="switchTab('orders')" id="tab-orders" class="pb-4 font-bold active-tab">Live Orders</button>
-            <button onclick="switchTab('menu-mgt')" id="tab-menu" class="pb-4 font-bold text-gray-400">Manage Menu</button>
-            <button onclick="switchTab('settings')" id="tab-settings" class="pb-4 font-bold text-gray-400">Settings</button>
-            <button onclick="logoutStaff()" class="pb-4 font-bold text-red-500 ml-auto text-sm italic">Exit Panel</button>
-        </div>
+        <main id="admin-view" class="flex-1 hidden bg-white">
+            <div class="flex h-full">
+                <aside class="w-64 border-r p-6 flex flex-col gap-2">
+                    <button onclick="adminTab('live')" id="atab-live" class="p-4 rounded-2xl text-left font-bold sidebar-active">Live Orders</button>
+                    <button onclick="adminTab('menu')" id="atab-menu" class="p-4 rounded-2xl text-left font-bold text-gray-400">Edit Menu</button>
+                    <button onclick="adminTab('cats')" id="atab-cats" class="p-4 rounded-2xl text-left font-bold text-gray-400">Categories</button>
+                    <button onclick="adminTab('settings')" id="atab-settings" class="p-4 rounded-2xl text-left font-bold text-gray-400">Settings</button>
+                    <div class="mt-auto pt-6 border-t">
+                        <button onclick="logoutAdmin()" class="w-full p-4 bg-red-50 text-red-500 rounded-2xl font-bold text-sm italic">Close Portal</button>
+                    </div>
+                </aside>
+                
+                <section class="flex-1 p-10 overflow-y-auto custom-scroll">
+                    
+                    <div id="pane-live" class="space-y-6">
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="text-4xl font-black">Kitchen Display</h2>
+                            <div class="flex gap-4">
+                                <div class="p-4 bg-orange-50 rounded-2xl"><p class="text-[10px] font-bold text-orange-500 uppercase">Orders</p><h5 id="stat-ord" class="text-xl font-bold">0</h5></div>
+                                <div class="p-4 bg-zinc-900 text-white rounded-2xl"><p class="text-[10px] font-bold text-gray-400 uppercase">Today</p><h5 id="stat-rev" class="text-xl font-bold text-orange-400">₹0</h5></div>
+                            </div>
+                        </div>
+                        <div id="live-orders-container" class="grid grid-cols-1 xl:grid-cols-2 gap-6"></div>
+                    </div>
 
-        <div id="sec-orders" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    <div id="pane-menu" class="hidden animate-pop">
+                        <h2 class="text-3xl font-black mb-8">Item Management</h2>
+                        <div class="bg-zinc-50 p-8 rounded-[2rem] mb-10 border border-dashed">
+                            <h5 class="font-bold mb-4 text-sm">Add New Product</h5>
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                <input id="m-name" type="text" placeholder="Item Name" class="p-4 rounded-xl border-none outline-none focus:ring-2 ring-orange-400">
+                                <input id="m-price" type="number" placeholder="Price" class="p-4 rounded-xl border-none outline-none focus:ring-2 ring-orange-400">
+                                <select id="m-cat" class="p-4 rounded-xl border-none outline-none focus:ring-2 ring-orange-400"></select>
+                                <button onclick="saveNewItem()" class="bg-zinc-900 text-white rounded-xl font-bold">Add to Menu</button>
+                            </div>
+                        </div>
+                        <div id="admin-menu-list" class="space-y-4"></div>
+                    </div>
 
-        <div id="sec-menu-mgt" class="hidden bg-white p-6 rounded-3xl shadow-sm">
-            <h3 class="text-xl font-bold mb-6">Add New Item</h3>
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                <input type="text" id="new-name" placeholder="Item Name" class="p-3 border rounded-xl">
-                <input type="number" id="new-price" placeholder="Price" class="p-3 border rounded-xl">
-                <select id="new-cat" class="p-3 border rounded-xl">
-                    <option value="Food">Food</option>
-                    <option value="Beverages">Beverages</option>
-                    <option value="Dessert">Dessert</option>
-                </select>
-                <button onclick="addNewItem()" class="bg-black text-white p-3 rounded-xl font-bold">+ Add Item</button>
-            </div>
-            <div id="admin-menu-list" class="divide-y"></div>
-        </div>
+                    <div id="pane-cats" class="hidden animate-pop">
+                        <h2 class="text-3xl font-black mb-8">Categories</h2>
+                        <div class="flex gap-4 mb-10">
+                            <input id="c-name" type="text" placeholder="Category Name (e.g. Snacks)" class="flex-1 p-4 bg-zinc-100 rounded-xl outline-none">
+                            <button onclick="addCategory()" class="bg-zinc-900 text-white px-8 rounded-xl font-bold">Save</button>
+                        </div>
+                        <div id="admin-cats-list" class="grid grid-cols-2 md:grid-cols-4 gap-4"></div>
+                    </div>
 
-        <div id="sec-settings" class="hidden space-y-8 bg-white p-8 rounded-3xl">
-            <div>
-                <label class="block font-bold mb-2">Cafe Name</label>
-                <input type="text" id="set-cafe-name" class="w-full p-3 border rounded-xl" onchange="saveSettings()">
+                    <div id="pane-settings" class="hidden animate-pop space-y-10">
+                        <h2 class="text-3xl font-black mb-8">Cafe Branding</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                            <div class="space-y-6">
+                                <div><label class="block text-xs font-black uppercase text-gray-400 mb-2">Display Name</label><input id="s-name" type="text" class="w-full p-4 bg-zinc-100 rounded-2xl outline-none focus:ring-2 ring-orange-400"></div>
+                                <div><label class="block text-xs font-black uppercase text-gray-400 mb-2">Security PIN</label><input id="s-pin" type="text" class="w-full p-4 bg-zinc-100 rounded-2xl outline-none focus:ring-2 ring-orange-400"></div>
+                                <button onclick="updateGlobalSettings()" class="w-full bg-zinc-900 text-white py-4 rounded-2xl font-bold">Save Changes</button>
+                            </div>
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="block text-xs font-black uppercase text-gray-400 mb-2">Cafe Logo</label>
+                                    <div class="border-2 border-dashed rounded-[2rem] p-10 text-center">
+                                        <input type="file" id="s-logo" accept="image/*" class="hidden" onchange="processLogo(event)">
+                                        <button onclick="document.getElementById('s-logo').click()" class="bg-zinc-100 px-6 py-3 rounded-xl text-xs font-bold uppercase">Choose Image</button>
+                                        <p class="mt-4 text-[10px] text-gray-400">Recommended: Square PNG/JPG</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </section>
             </div>
-            <div>
-                <label class="block font-bold mb-2">Upload Logo (Image)</label>
-                <input type="file" id="logo-upload" accept="image/*" class="w-full p-3 border border-dashed rounded-xl" onchange="handleLogo(event)">
-            </div>
-            <div>
-                <label class="block font-bold mb-2">Daily Stats</label>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="p-4 bg-orange-50 rounded-2xl"><p class="text-xs text-orange-600 font-bold">Total Orders Today</p><h4 id="stat-count" class="text-2xl font-bold">0</h4></div>
-                    <div class="p-4 bg-green-50 rounded-2xl"><p class="text-xs text-green-600 font-bold">Daily Revenue</p><h4 id="stat-revenue" class="text-2xl font-bold">₹0</h4></div>
-                </div>
-            </div>
-        </div>
-    </main>
+        </main>
+    </div>
 
     <script>
-        // --- DATA & STATE ---
-        let config = JSON.parse(localStorage.getItem('cafeConfig')) || { name: 'Brew & Bite Cafe', logo: '', pin: '1234' };
-        let menuItems = JSON.parse(localStorage.getItem('cafeMenu')) || [
-            { id: 1, name: 'Grilled Cheese', price: 250, cat: 'Food', stock: true },
-            { id: 2, name: 'Espresso', price: 120, cat: 'Beverages', stock: true }
-        ];
-        let orders = [];
-        let cart = [];
-        let payMethod = 'UPI';
-
-        // --- INITIALIZATION ---
-        window.onload = () => {
-            applyConfig();
-            renderMenu();
+        // --- 1. MASTER STATE ---
+        let db = {
+            config: JSON.parse(localStorage.getItem('br_config')) || { name: 'Rustic Root', pin: '1234', logo: '', upi: 'cafe@upi' },
+            menu: JSON.parse(localStorage.getItem('br_menu')) || [
+                { id: 1, name: 'Classic Espresso', price: 120, cat: 'Coffee', stock: true },
+                { id: 2, name: 'Grilled Sandwich', price: 250, cat: 'Snacks', stock: true }
+            ],
+            cats: JSON.parse(localStorage.getItem('br_cats')) || ['Coffee', 'Snacks', 'Desserts'],
+            orders: [],
+            revenue: 0
         };
 
-        function applyConfig() {
-            document.getElementById('header-name').innerText = config.name;
-            document.getElementById('entry-cafe-name').innerText = config.name;
-            document.getElementById('set-cafe-name').value = config.name;
-            if(config.logo) {
-                document.getElementById('main-logo').src = config.logo;
-                document.getElementById('main-logo').classList.remove('hidden');
-                document.getElementById('fallback-icon').classList.add('hidden');
-                document.getElementById('preview-logo-entry').innerHTML = `<img src="${config.logo}" class="w-full h-full rounded-full object-cover">`;
+        let cart = [];
+        let activePay = 'UPI';
+        let currentUser = { name: '', table: '' };
+
+        // --- 2. INITIALIZATION ---
+        function init() {
+            renderConfig();
+            renderCustomerMenu();
+            renderAdminTools();
+        }
+
+        function renderConfig() {
+            document.getElementById('brand-name').innerText = db.config.name;
+            document.getElementById('entry-title').innerText = db.config.name;
+            document.getElementById('s-name').value = db.config.name;
+            document.getElementById('s-pin').value = db.config.pin;
+            document.title = db.config.name + " | Ordering";
+            
+            if(db.config.logo) {
+                document.getElementById('header-logo').src = db.config.logo;
+                document.getElementById('header-logo').classList.remove('hidden');
+                document.getElementById('header-icon-fallback').classList.add('hidden');
+                document.getElementById('entry-img-logo').src = db.config.logo;
+                document.getElementById('entry-img-logo').classList.remove('hidden');
+                document.getElementById('entry-default-icon').classList.add('hidden');
             }
         }
 
-        // --- CUSTOMER ACTIONS ---
-        function initCustomer() {
-            const n = document.getElementById('cust-name').value;
-            const t = document.getElementById('cust-table').value;
-            if(!n || !t) return alert("Bhai, Details dalo!");
-            document.getElementById('entry-screen').classList.add('hidden');
+        // --- 3. CUSTOMER LOGIC ---
+        function accessCafe() {
+            const n = document.getElementById('user-name').value;
+            const t = document.getElementById('table-no').value;
+            if(!n || !t) return alert("Bhai detail toh bhar!");
+            currentUser = { name: n, table: t };
+            document.getElementById('user-info-tag').innerText = `Table ${t} | ${n}`;
+            document.getElementById('entry-layer').classList.add('hidden');
         }
 
-        function renderMenu() {
-            const container = document.getElementById('menu-display');
-            container.innerHTML = '';
-            const cats = [...new Set(menuItems.map(i => i.cat))];
-            
-            cats.forEach(cat => {
-                let html = `<section><h3 class="text-orange-500 font-bold uppercase tracking-widest text-sm mb-4 border-l-4 border-orange-500 pl-3">${cat}</h3><div class="grid gap-4">`;
-                menuItems.filter(i => i.cat === cat).forEach(item => {
-                    html += `
-                        <div onclick="addToCart(${item.id})" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-50 flex justify-between items-center cursor-pointer hover:border-orange-200 hover:shadow-md transition">
-                            <div><h4 class="font-bold text-zinc-800">${item.name}</h4><p class="text-xs text-gray-400">Freshly prepared</p></div>
-                            <span class="font-bold text-lg">₹${item.price}</span>
+        function renderCustomerMenu() {
+            const grid = document.getElementById('menu-grid');
+            const nav = document.getElementById('nav-list');
+            grid.innerHTML = ''; nav.innerHTML = '';
+
+            db.cats.forEach(c => {
+                nav.innerHTML += `<a href="#c-${c}" class="p-3 rounded-xl text-sm font-semibold text-gray-500 hover:bg-gray-100 transition">${c}</a>`;
+                
+                let catHtml = `<div id="c-${c}"><h3 class="text-xs font-black uppercase tracking-widest text-orange-500 mb-6 border-b pb-2">${c}</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
+                
+                db.menu.filter(m => m.cat === c).forEach(item => {
+                    catHtml += `
+                        <div onclick="addToTray(${item.id})" class="bg-white p-5 rounded-[1.5rem] border border-gray-100 shadow-sm flex justify-between items-center cursor-pointer hover:border-orange-400 hover:shadow-md transition ${!item.stock ? 'opacity-50 grayscale pointer-events-none' : ''}">
+                            <div class="pr-4">
+                                <h4 class="font-bold text-zinc-800">${item.name}</h4>
+                                <p class="text-[10px] text-gray-400 uppercase font-bold mt-1 tracking-tighter">${item.stock ? 'Available' : 'Sold Out'}</p>
+                            </div>
+                            <span class="text-lg font-black italic">₹${item.price}</span>
                         </div>`;
                 });
-                html += `</div></section>`;
-                container.innerHTML += html;
+                catHtml += `</div></div>`;
+                grid.innerHTML += catHtml;
             });
-            updateAdminMenuList();
-        }
-
-        function addToCart(id) {
-            const item = menuItems.find(i => i.id === id);
-            cart.push(item);
-            updateCartUI();
-        }
-
-        function updateCartUI() {
-            const list = document.getElementById('cart-list');
-            const summary = document.getElementById('cart-summary');
-            document.getElementById('cart-count').innerText = cart.length;
             
+            // Update admin category dropdown
+            const catSelect = document.getElementById('m-cat');
+            catSelect.innerHTML = db.cats.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        function addToTray(id) {
+            const item = db.menu.find(m => m.id === id);
+            cart.push(item);
+            updateTray();
+        }
+
+        function updateTray() {
+            const list = document.getElementById('tray-list');
+            const summary = document.getElementById('tray-summary');
+            document.getElementById('tray-count').innerText = cart.length;
+
             if(cart.length === 0) {
-                list.innerHTML = '<p class="text-gray-400 text-center py-10">Cart is empty</p>';
+                list.innerHTML = `<div class="text-center py-10"><p class="text-gray-400 text-sm">Nothing selected...</p></div>`;
                 summary.classList.add('hidden');
                 return;
             }
@@ -207,119 +303,213 @@
             let total = 0;
             cart.forEach((item, idx) => {
                 total += item.price;
-                list.innerHTML += `<div class="flex justify-between text-sm"><span>${item.name}</span><span class="font-bold">₹${item.price}</span></div>`;
+                list.innerHTML += `
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="text-sm font-bold">${item.name}</div>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs font-black">₹${item.price}</span>
+                            <button onclick="removeFromTray(${idx})" class="text-red-400 text-lg">×</button>
+                        </div>
+                    </div>`;
             });
-            document.getElementById('total-price').innerText = '₹' + total;
+            document.getElementById('tray-total').innerText = '₹' + total;
         }
 
-        function setPayment(method) {
-            payMethod = method;
-            document.getElementById('pay-upi').className = method === 'UPI' ? 'p-3 border-2 rounded-xl text-sm font-bold border-orange-400 bg-orange-50' : 'p-3 border-2 rounded-xl text-sm font-bold border-gray-200';
-            document.getElementById('pay-cash').className = method === 'CASH' ? 'p-3 border-2 rounded-xl text-sm font-bold border-orange-400 bg-orange-50' : 'p-3 border-2 rounded-xl text-sm font-bold border-gray-200';
+        function removeFromTray(index) {
+            cart.splice(index, 1);
+            updateTray();
         }
 
-        function submitOrder() {
-            const name = document.getElementById('cust-name').value;
-            const table = document.getElementById('cust-table').value;
+        function setPay(m) {
+            activePay = m;
+            document.getElementById('btn-upi').className = m === 'UPI' ? 'py-2 rounded-lg text-xs font-bold bg-zinc-900 text-white shadow-md' : 'py-2 rounded-lg text-xs font-bold text-gray-400';
+            document.getElementById('btn-cash').className = m === 'CASH' ? 'py-2 rounded-lg text-xs font-bold bg-zinc-900 text-white shadow-md' : 'py-2 rounded-lg text-xs font-bold text-gray-400';
+        }
+
+        function checkout() {
+            if(activePay === 'UPI') {
+                const total = cart.reduce((s,i) => s + i.price, 0);
+                document.getElementById('upi-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=${db.config.upi}&pn=${db.config.name}&am=${total}&cu=INR`;
+                document.getElementById('payment-modal').classList.remove('hidden');
+            } else {
+                confirmOrder();
+            }
+        }
+
+        function closePayment() {
+            document.getElementById('payment-modal').classList.add('hidden');
+            confirmOrder();
+        }
+
+        function confirmOrder() {
             const order = {
                 id: Date.now(),
-                name, table, items: [...cart], 
-                total: cart.reduce((a,b) => a + b.price, 0),
-                pay: payMethod, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+                user: currentUser.name,
+                table: currentUser.table,
+                items: [...cart],
+                total: cart.reduce((s,i) => s + i.price, 0),
+                pay: activePay,
+                time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
             };
-            orders.unshift(order);
-            alert(`Order Placed via ${payMethod}!`);
+            db.orders.unshift(order);
+            db.revenue += order.total;
+            alert("Order Placed Successfully!");
             cart = [];
-            updateCartUI();
-            updateStaffOrders();
-            updateStats();
+            updateTray();
+            updateAdminDashboard();
         }
 
-        // --- STAFF PANEL LOGIC ---
-        function showPinModal() { document.getElementById('pin-modal').classList.remove('hidden'); }
-        function closeModal(id) { document.getElementById('pin-modal').classList.add('hidden'); }
+        // --- 4. ADMIN LOGIC ---
+        function showStaffAuth() { document.getElementById('staff-auth').classList.remove('hidden'); }
+        function hideStaffAuth() { document.getElementById('staff-auth').classList.add('hidden'); }
         
-        function checkPin() {
-            if(document.getElementById('pin-input').value === config.pin) {
-                document.getElementById('customer-ui').classList.add('hidden');
-                document.getElementById('staff-ui').classList.remove('hidden');
-                closeModal();
-                switchTab('orders');
-            } else { alert("Wrong PIN!"); }
+        function loginAdmin() {
+            if(document.getElementById('admin-pin').value === db.config.pin) {
+                document.getElementById('customer-view').classList.add('hidden');
+                document.getElementById('admin-view').classList.remove('hidden');
+                hideStaffAuth();
+                adminTab('live');
+            } else {
+                alert("Incorrect Security PIN!");
+            }
         }
 
-        function switchTab(tab) {
-            ['orders', 'menu-mgt', 'settings'].forEach(t => {
-                document.getElementById('sec-' + t).classList.add('hidden');
-                document.getElementById('tab-' + t).className = 'pb-4 font-bold text-gray-400';
+        function logoutAdmin() {
+            document.getElementById('admin-view').classList.add('hidden');
+            document.getElementById('customer-view').classList.remove('hidden');
+            document.getElementById('admin-pin').value = '';
+        }
+
+        function adminTab(tab) {
+            ['live', 'menu', 'cats', 'settings'].forEach(t => {
+                document.getElementById('pane-' + t).classList.add('hidden');
+                document.getElementById('atab-' + t).className = 'p-4 rounded-2xl text-left font-bold text-gray-400';
             });
-            document.getElementById('sec-' + tab).classList.remove('hidden');
-            document.getElementById('tab-' + tab).className = 'pb-4 font-bold active-tab';
+            document.getElementById('pane-' + tab).classList.remove('hidden');
+            document.getElementById('atab-' + tab).className = 'p-4 rounded-2xl text-left font-bold sidebar-active';
+            
+            if(tab === 'menu') renderAdminMenu();
+            if(tab === 'cats') renderAdminCats();
         }
 
-        function updateStaffOrders() {
-            const container = document.getElementById('sec-orders');
-            if(orders.length === 0) { container.innerHTML = '<p class="text-gray-400">No live orders.</p>'; return; }
-            container.innerHTML = orders.map(o => `
-                <div class="bg-white p-6 rounded-3xl shadow-sm border-l-8 border-orange-400">
-                    <div class="flex justify-between mb-4"><span class="font-bold">Table ${o.table} - ${o.name}</span><span class="text-xs font-bold bg-zinc-100 px-2 py-1 rounded-full">${o.pay}</span></div>
-                    <div class="text-sm text-gray-600 mb-4">${o.items.map(i => i.name).join(', ')}</div>
+        function updateAdminDashboard() {
+            document.getElementById('stat-ord').innerText = db.orders.length;
+            document.getElementById('stat-rev').innerText = '₹' + db.revenue;
+            
+            const container = document.getElementById('live-orders-container');
+            container.innerHTML = db.orders.map(o => `
+                <div class="bg-zinc-50 p-6 rounded-[2rem] border-l-8 border-orange-400 animate-pop">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h5 class="font-black text-xl">Table ${o.table}</h5>
+                            <p class="text-xs text-gray-400 font-bold uppercase">${o.user}</p>
+                        </div>
+                        <span class="bg-white px-3 py-1 rounded-full text-[10px] font-black border uppercase">${o.pay}</span>
+                    </div>
+                    <div class="space-y-1 mb-6">
+                        ${o.items.map(i => `<div class="text-sm font-medium flex justify-between"><span>${i.name}</span><span>₹${i.price}</span></div>`).join('')}
+                    </div>
                     <div class="flex justify-between items-center pt-4 border-t border-dashed">
-                        <span class="font-bold text-orange-600 text-lg">₹${o.total}</span>
-                        <span class="text-xs text-gray-400">${o.time}</span>
+                        <span class="text-xs font-bold text-gray-400">${o.time}</span>
+                        <span class="text-xl font-black">₹${o.total}</span>
                     </div>
                 </div>
             `).join('');
         }
 
-        function addNewItem() {
-            const name = document.getElementById('new-name').value;
-            const price = parseInt(document.getElementById('new-price').value);
-            const cat = document.getElementById('new-cat').value;
-            if(!name || !price) return;
-            menuItems.push({ id: Date.now(), name, price, cat, stock: true });
-            localStorage.setItem('cafeMenu', JSON.stringify(menuItems));
-            renderMenu();
-            document.getElementById('new-name').value = '';
-            document.getElementById('new-price').value = '';
-        }
-
-        function updateAdminMenuList() {
+        function renderAdminMenu() {
             const list = document.getElementById('admin-menu-list');
-            list.innerHTML = menuItems.map(item => `
-                <div class="py-4 flex justify-between items-center">
-                    <div><span class="font-bold">${item.name}</span> <span class="text-xs text-gray-400">(${item.cat})</span></div>
-                    <div class="flex items-center gap-4 font-bold">₹${item.price} <button onclick="deleteItem(${item.id})" class="text-red-500 text-xl">×</button></div>
+            list.innerHTML = db.menu.map(i => `
+                <div class="p-4 bg-zinc-50 rounded-2xl flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <button onclick="toggleStock(${i.id})" class="w-10 h-10 rounded-xl ${i.stock ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'} flex items-center justify-center font-black">●</button>
+                        <div>
+                            <p class="font-bold">${i.name} <span class="text-[10px] text-gray-400 uppercase font-bold tracking-widest ml-2">${i.cat}</span></p>
+                            <p class="text-xs font-bold text-orange-500">₹${i.price}</p>
+                        </div>
+                    </div>
+                    <button onclick="deleteItem(${i.id})" class="text-gray-300 hover:text-red-500 text-xl font-bold">×</button>
                 </div>
             `).join('');
         }
 
+        function toggleStock(id) {
+            const item = db.menu.find(i => i.id === id);
+            item.stock = !item.stock;
+            saveDB();
+            renderAdminMenu();
+            renderCustomerMenu();
+        }
+
+        function saveNewItem() {
+            const n = document.getElementById('m-name').value;
+            const p = document.getElementById('m-price').value;
+            const c = document.getElementById('m-cat').value;
+            if(!n || !p) return;
+            db.menu.push({ id: Date.now(), name: n, price: parseInt(p), cat: c, stock: true });
+            saveDB();
+            renderAdminMenu();
+            renderCustomerMenu();
+            document.getElementById('m-name').value = '';
+            document.getElementById('m-price').value = '';
+        }
+
         function deleteItem(id) {
-            menuItems = menuItems.filter(i => i.id !== id);
-            localStorage.setItem('cafeMenu', JSON.stringify(menuItems));
-            renderMenu();
+            db.menu = db.menu.filter(i => i.id !== id);
+            saveDB();
+            renderAdminMenu();
+            renderCustomerMenu();
         }
 
-        // --- SETTINGS ---
-        function handleLogo(e) {
-            const file = e.target.files[0];
+        function renderAdminCats() {
+            const list = document.getElementById('admin-cats-list');
+            list.innerHTML = db.cats.map(c => `
+                <div class="bg-zinc-100 p-4 rounded-xl flex justify-between items-center font-bold text-sm">
+                    ${c} <button onclick="deleteCat('${c}')" class="text-red-400 text-lg">×</button>
+                </div>
+            `).join('');
+        }
+
+        function addCategory() {
+            const c = document.getElementById('c-name').value;
+            if(!c || db.cats.includes(c)) return;
+            db.cats.push(c);
+            saveDB();
+            renderAdminCats();
+            renderCustomerMenu();
+            document.getElementById('c-name').value = '';
+        }
+
+        function deleteCat(c) {
+            db.cats = db.cats.filter(x => x !== c);
+            saveDB();
+            renderAdminCats();
+            renderCustomerMenu();
+        }
+
+        function processLogo(e) {
             const reader = new FileReader();
-            reader.onload = () => { config.logo = reader.result; saveSettings(); };
-            reader.readAsDataURL(file);
+            reader.onload = () => { db.config.logo = reader.result; saveDB(); renderConfig(); };
+            reader.readAsDataURL(e.target.files[0]);
         }
 
-        function saveSettings() {
-            config.name = document.getElementById('set-cafe-name').value;
-            localStorage.setItem('cafeConfig', JSON.stringify(config));
-            applyConfig();
+        function updateGlobalSettings() {
+            db.config.name = document.getElementById('s-name').value;
+            db.config.pin = document.getElementById('s-pin').value;
+            saveDB();
+            renderConfig();
+            alert("Settings Updated!");
         }
 
-        function updateStats() {
-            document.getElementById('stat-count').innerText = orders.length;
-            document.getElementById('stat-revenue').innerText = '₹' + orders.reduce((a,b) => a + b.total, 0);
+        function saveDB() {
+            localStorage.setItem('br_config', JSON.stringify(db.config));
+            localStorage.setItem('br_menu', JSON.stringify(db.menu));
+            localStorage.setItem('br_cats', JSON.stringify(db.cats));
         }
 
-        function logoutStaff() { location.reload(); }
+        init();
+        updateAdminDashboard();
+
     </script>
 </body>
 </html>
