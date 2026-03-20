@@ -9,15 +9,17 @@
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #F8F9FA; }
         .cafe-header { background-color: #1A1A1A; color: #F8B400; }
-        .card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px rgba(0,0,0,0.05); cursor: pointer; transition: 0.2s; }
+        .card:hover { transform: translateY(-3px); border: 1px solid #F8B400; }
+        .card:active { transform: scale(0.98); }
     </style>
 </head>
 <body>
 
-    <header class="cafe-header p-4 flex justify-between items-center shadow-lg">
+    <header class="cafe-header p-4 flex justify-between items-center shadow-lg sticky top-0 z-50">
         <div class="flex items-center gap-2">
             <span class="text-3xl">☕</span>
-            <h1 class="text-xl font-bold tracking-tight">BREW & BITE CAFE</h1>
+            <h1 class="text-xl font-bold tracking-tight uppercase">Brew & Bite Cafe</h1>
         </div>
         <button class="bg-[#2D2D2D] text-white px-4 py-1.5 rounded-lg text-sm border border-stone-700">STAFF PORTAL</button>
     </header>
@@ -31,67 +33,102 @@
 
             <section class="mb-10">
                 <h3 class="text-orange-500 font-bold uppercase tracking-wider mb-4 border-l-4 border-orange-500 pl-3">Food</h3>
-                <div class="card p-5 flex justify-between items-start transition-transform hover:scale-[1.02] cursor-pointer">
+                <div onclick="addToCart('Grilled Cheese Sandwich', 250)" class="card p-5 flex justify-between items-start">
                     <div>
                         <h4 class="font-bold text-lg">Grilled Cheese Sandwich</h4>
-                        <p class="text-gray-500 text-sm mt-1">Crisp sourdough with melted cheddar and mozzarella.</p>
+                        <p class="text-gray-500 text-sm mt-1">Crisp sourdough with melted cheddar.</p>
                     </div>
-                    <span class="font-bold text-lg">₹250</span>
+                    <span class="font-bold text-lg text-stone-800">₹250</span>
                 </div>
             </section>
 
             <section class="mb-10">
                 <h3 class="text-orange-500 font-bold uppercase tracking-wider mb-4 border-l-4 border-orange-500 pl-3">Beverages</h3>
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div class="card p-5 flex justify-between items-start transition-transform hover:scale-[1.02] cursor-pointer">
-                        <div>
-                            <h4 class="font-bold text-lg">Espresso</h4>
-                            <p class="text-gray-500 text-sm mt-1">Strong, concentrated classic coffee.</p>
-                        </div>
+                    <div onclick="addToCart('Espresso', 120)" class="card p-5 flex justify-between items-start">
+                        <div><h4 class="font-bold text-lg">Espresso</h4><p class="text-gray-500 text-sm">Strong classic coffee.</p></div>
                         <span class="font-bold text-lg">₹120</span>
                     </div>
-                    <div class="card p-5 flex justify-between items-start transition-transform hover:scale-[1.02] cursor-pointer">
-                        <div>
-                            <h4 class="font-bold text-lg">Cappuccino</h4>
-                            <p class="text-gray-500 text-sm mt-1">Espresso with steamed milk and thick foam.</p>
-                        </div>
+                    <div onclick="addToCart('Cappuccino', 180)" class="card p-5 flex justify-between items-start">
+                        <div><h4 class="font-bold text-lg">Cappuccino</h4><p class="text-gray-500 text-sm">Steamed milk & foam.</p></div>
                         <span class="font-bold text-lg">₹180</span>
-                    </div>
-                </div>
-            </section>
-
-            <section>
-                <h3 class="text-orange-500 font-bold uppercase tracking-wider mb-4 border-l-4 border-orange-500 pl-3">Dessert</h3>
-                <div class="card p-5 opacity-50 relative overflow-hidden">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h4 class="font-bold text-lg italic text-gray-400">Chocolate Chip Muffin</h4>
-                            <p class="text-gray-400 text-sm mt-1">Freshly baked muffin loaded with chocolate chips.</p>
-                        </div>
-                        <span class="bg-stone-100 text-stone-500 text-xs px-2 py-1 rounded uppercase font-bold">Out of Stock</span>
                     </div>
                 </div>
             </section>
         </div>
 
         <div class="md:col-span-1">
-            <div class="card bg-white sticky top-6 overflow-hidden">
+            <div class="bg-white rounded-2xl shadow-xl sticky top-24 overflow-hidden border border-gray-100">
                 <div class="bg-[#1A1A1A] text-white p-4 flex justify-between items-center">
-                    <h3 class="font-bold uppercase text-sm tracking-widest flex items-center gap-2">
+                    <h3 class="font-bold uppercase text-xs tracking-widest flex items-center gap-2">
                         <span>👜</span> Your Order
                     </h3>
-                    <span class="bg-orange-400 text-black px-2 py-0.5 rounded-full text-xs font-bold">0</span>
+                    <span id="cart-count" class="bg-orange-400 text-black px-2 py-0.5 rounded-full text-xs font-bold">0</span>
                 </div>
-                <div class="p-10 text-center">
-                    <div class="bg-gray-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <span class="text-2xl grayscale opacity-30">🛍️</span>
+                
+                <div id="cart-items" class="p-4 max-h-64 overflow-y-auto">
+                    <div class="py-10 text-center text-gray-400">
+                        <p>Hungry? Add something!</p>
                     </div>
-                    <p class="text-gray-400 font-medium">Hungry? Add something!</p>
+                </div>
+
+                <div id="cart-footer" class="p-4 border-t border-gray-100 hidden">
+                    <div class="flex justify-between font-bold text-lg mb-4">
+                        <span>Total:</span>
+                        <span id="cart-total">₹0</span>
+                    </div>
+                    <button onclick="clearCart()" class="w-full bg-stone-100 text-stone-600 py-2 rounded-lg text-sm mb-2 font-bold hover:bg-stone-200">Clear Cart</button>
+                    <button class="w-full bg-orange-400 text-black py-3 rounded-xl font-bold hover:bg-orange-500 transition-colors">Place Order</button>
                 </div>
             </div>
         </div>
-
     </main>
+
+    <script>
+        let cart = [];
+        let total = 0;
+
+        function addToCart(name, price) {
+            cart.push({name, price});
+            updateCart();
+        }
+
+        function clearCart() {
+            cart = [];
+            updateCart();
+        }
+
+        function updateCart() {
+            const itemsDiv = document.getElementById('cart-items');
+            const footer = document.getElementById('cart-footer');
+            const countSpan = document.getElementById('cart-count');
+            const totalSpan = document.getElementById('cart-total');
+
+            countSpan.innerText = cart.length;
+
+            if (cart.length === 0) {
+                itemsDiv.innerHTML = '<div class="py-10 text-center text-gray-400"><p>Hungry? Add something!</p></div>';
+                footer.classList.add('hidden');
+                return;
+            }
+
+            footer.classList.remove('hidden');
+            itemsDiv.innerHTML = '';
+            total = 0;
+
+            cart.forEach((item, index) => {
+                total += item.price;
+                itemsDiv.innerHTML += `
+                    <div class="flex justify-between items-center mb-3 animate-in fade-in duration-300">
+                        <span class="text-sm font-medium text-gray-700">${item.name}</span>
+                        <span class="text-sm font-bold">₹${item.price}</span>
+                    </div>
+                `;
+            });
+
+            totalSpan.innerText = '₹' + total;
+        }
+    </script>
 
 </body>
 </html>
