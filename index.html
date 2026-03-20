@@ -3,189 +3,323 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Brew & Bite Cafe - Ordering System</title>
+    <title id="tab-title">Cafe Ordering System</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #F3F4F6; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f9fafb; }
         .hidden { display: none; }
-        .card { background: white; border-radius: 1rem; transition: 0.2s; cursor: pointer; border: 1px solid transparent; }
-        .card:hover { border-color: #F8B400; transform: translateY(-2px); }
-        .btn-primary { background-color: #F8B400; color: black; font-weight: bold; transition: 0.2s; }
-        .btn-primary:hover { background-color: #e2a300; }
+        .active-tab { border-bottom: 2px solid #f8b400; color: #f8b400; }
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
     </style>
 </head>
 <body>
 
-    <div id="auth-overlay" class="fixed inset-0 bg-black bg-opacity-80 z-[100] flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-2xl max-w-sm w-full text-center">
-            <h2 class="text-2xl font-bold mb-2">Welcome to ☕</h2>
-            <p class="text-gray-500 mb-6 text-sm">Please enter your details to start ordering.</p>
-            <input type="text" id="cust-name" placeholder="Your Name" class="w-full p-3 border rounded-xl mb-3 outline-none focus:ring-2 ring-orange-400">
-            <input type="number" id="table-num" placeholder="Table Number" class="w-full p-3 border rounded-xl mb-6 outline-none focus:ring-2 ring-orange-400">
-            <button onclick="startSession()" class="w-full btn-primary py-3 rounded-xl">Start Ordering</button>
+    <div id="entry-screen" class="fixed inset-0 bg-black/90 z-[200] flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-3xl max-w-sm w-full shadow-2xl">
+            <div id="preview-logo-entry" class="w-20 h-20 bg-orange-100 rounded-full mx-auto mb-4 flex items-center justify-center text-3xl">☕</div>
+            <h2 class="text-2xl font-bold text-center mb-6" id="entry-cafe-name">Brew & Bite Cafe</h2>
+            <input type="text" id="cust-name" placeholder="Enter Your Name" class="w-full p-4 border rounded-2xl mb-4 outline-none focus:ring-2 ring-orange-400">
+            <input type="number" id="cust-table" placeholder="Table Number" class="w-full p-4 border rounded-2xl mb-6 outline-none focus:ring-2 ring-orange-400">
+            <button onclick="initCustomer()" class="w-full bg-black text-white py-4 rounded-2xl font-bold hover:bg-zinc-800 transition">Start Ordering</button>
         </div>
     </div>
 
-    <div id="pin-modal" class="fixed inset-0 bg-black bg-opacity-50 z-[110] hidden flex items-center justify-center p-4">
-        <div class="bg-white p-6 rounded-2xl max-w-xs w-full">
-            <h3 class="font-bold text-center mb-4">Enter Staff PIN</h3>
-            <input type="password" id="staff-pin" placeholder="••••" class="w-full text-center text-2xl tracking-widest p-3 border rounded-xl mb-4">
-            <div class="flex gap-2">
-                <button onclick="closePinModal()" class="flex-1 bg-gray-100 py-2 rounded-lg">Cancel</button>
-                <button onclick="verifyPin()" class="flex-1 btn-primary py-2 rounded-lg">Unlock</button>
+    <div id="pin-modal" class="fixed inset-0 bg-black/60 z-[300] hidden flex items-center justify-center">
+        <div class="bg-white p-6 rounded-3xl w-80 shadow-2xl">
+            <h3 class="text-center font-bold mb-4">Staff Security PIN</h3>
+            <input type="password" id="pin-input" placeholder="••••" class="w-full text-center text-3xl tracking-widest p-3 border-b-2 mb-4 outline-none">
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="closeModal('pin-modal')" class="p-3 bg-gray-100 rounded-xl">Cancel</button>
+                <button onclick="checkPin()" class="p-3 bg-orange-400 text-black font-bold rounded-xl">Unlock</button>
             </div>
-            <p id="pin-error" class="text-red-500 text-xs mt-2 text-center hidden">Incorrect PIN!</p>
         </div>
     </div>
 
-    <header class="bg-[#1A1A1A] text-[#F8B400] p-4 flex justify-between items-center sticky top-0 z-50 shadow-md">
-        <div class="flex items-center gap-2">
-            <span class="text-2xl">☕</span>
-            <h1 class="font-bold tracking-tight">BREW & BITE CAFE</h1>
+    <header class="bg-zinc-900 text-white p-4 sticky top-0 z-50 flex justify-between items-center shadow-xl">
+        <div class="flex items-center gap-3">
+            <img id="main-logo" src="" class="w-10 h-10 rounded-full hidden">
+            <div id="fallback-icon" class="text-2xl">☕</div>
+            <h1 id="header-name" class="font-bold text-lg tracking-tight uppercase text-orange-400">Brew & Bite Cafe</h1>
         </div>
-        <div class="flex items-center gap-4">
-            <span id="display-user" class="text-white text-xs hidden md:block"></span>
-            <button onclick="openPinModal()" id="portal-btn" class="bg-[#2D2D2D] text-white px-4 py-1.5 rounded-lg text-xs border border-stone-700">STAFF PORTAL</button>
-        </div>
+        <button onclick="showPinModal()" class="bg-zinc-800 border border-zinc-700 px-4 py-2 rounded-xl text-xs font-semibold hover:bg-zinc-700">STAFF PORTAL</button>
     </header>
 
-    <main id="customer-view" class="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="md:col-span-2">
-            <h2 class="text-3xl font-bold mb-8">🍴 Menu</h2>
-            <div id="menu-container">
+    <main id="customer-ui" class="max-w-6xl mx-auto p-4 md:p-8 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2">
+            <div class="flex items-center gap-2 mb-8">
+                <div class="w-1.5 h-8 bg-orange-400 rounded-full"></div>
+                <h2 class="text-3xl font-bold">Explore Menu</h2>
+            </div>
+            <div id="menu-display" class="space-y-8">
                 </div>
         </div>
 
-        <div class="md:col-span-1">
-            <div class="bg-white rounded-2xl shadow-xl sticky top-24 overflow-hidden">
-                <div class="bg-black text-white p-4 flex justify-between items-center">
-                    <span class="font-bold text-xs tracking-widest uppercase">Your Order</span>
-                    <span id="cart-count" class="bg-orange-400 text-black px-2 py-0.5 rounded-full text-xs font-bold">0</span>
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-3xl shadow-xl sticky top-24 overflow-hidden border border-gray-100">
+                <div class="p-5 bg-zinc-50 border-b flex justify-between items-center">
+                    <h3 class="font-bold text-zinc-800">Your Order</h3>
+                    <span id="cart-count" class="bg-black text-white text-xs px-2 py-1 rounded-full">0</span>
                 </div>
-                <div id="cart-items" class="p-4 min-h-[100px] max-h-80 overflow-y-auto text-gray-500 text-center py-10">
-                    Hungry? Add something!
+                <div id="cart-list" class="p-6 min-h-[150px] space-y-4">
+                    <p class="text-gray-400 text-center py-10">Cart is empty</p>
                 </div>
-                <div id="cart-footer" class="p-4 border-t hidden">
-                    <div class="flex justify-between font-bold text-lg mb-4"><span>Total:</span><span id="cart-total">₹0</span></div>
-                    <button onclick="placeOrder()" class="w-full btn-primary py-3 rounded-xl shadow-lg shadow-orange-200">Place Order</button>
+                <div id="cart-summary" class="p-6 bg-zinc-50 border-t hidden">
+                    <div class="flex justify-between mb-4 font-bold text-xl text-zinc-900">
+                        <span>Total</span>
+                        <span id="total-price">₹0</span>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <p class="text-xs font-bold text-gray-400 uppercase">Payment Method</p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="setPayment('UPI')" id="pay-upi" class="p-3 border-2 rounded-xl text-sm font-bold border-orange-400 bg-orange-50">UPI / QR</button>
+                            <button onclick="setPayment('CASH')" id="pay-cash" class="p-3 border-2 rounded-xl text-sm font-bold border-gray-200">Cash</button>
+                        </div>
+                        <button onclick="submitOrder()" class="w-full bg-orange-400 py-4 rounded-2xl font-bold text-black mt-4 shadow-lg shadow-orange-100">Confirm Order</button>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <main id="staff-view" class="max-w-4xl mx-auto p-6 hidden">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="text-3xl font-bold">📋 Active Orders</h2>
-            <button onclick="exitStaff()" class="text-red-500 font-bold text-sm">Exit Panel</button>
+    <main id="staff-ui" class="max-w-6xl mx-auto p-4 md:p-8 hidden">
+        <div class="flex flex-wrap gap-6 mb-8 border-b">
+            <button onclick="switchTab('orders')" id="tab-orders" class="pb-4 font-bold active-tab">Live Orders</button>
+            <button onclick="switchTab('menu-mgt')" id="tab-menu" class="pb-4 font-bold text-gray-400">Manage Menu</button>
+            <button onclick="switchTab('settings')" id="tab-settings" class="pb-4 font-bold text-gray-400">Settings</button>
+            <button onclick="logoutStaff()" class="pb-4 font-bold text-red-500 ml-auto text-sm italic">Exit Panel</button>
         </div>
-        <div id="orders-list" class="space-y-4">
-            <p class="text-gray-400">No active orders yet.</p>
+
+        <div id="sec-orders" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+
+        <div id="sec-menu-mgt" class="hidden bg-white p-6 rounded-3xl shadow-sm">
+            <h3 class="text-xl font-bold mb-6">Add New Item</h3>
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                <input type="text" id="new-name" placeholder="Item Name" class="p-3 border rounded-xl">
+                <input type="number" id="new-price" placeholder="Price" class="p-3 border rounded-xl">
+                <select id="new-cat" class="p-3 border rounded-xl">
+                    <option value="Food">Food</option>
+                    <option value="Beverages">Beverages</option>
+                    <option value="Dessert">Dessert</option>
+                </select>
+                <button onclick="addNewItem()" class="bg-black text-white p-3 rounded-xl font-bold">+ Add Item</button>
+            </div>
+            <div id="admin-menu-list" class="divide-y"></div>
+        </div>
+
+        <div id="sec-settings" class="hidden space-y-8 bg-white p-8 rounded-3xl">
+            <div>
+                <label class="block font-bold mb-2">Cafe Name</label>
+                <input type="text" id="set-cafe-name" class="w-full p-3 border rounded-xl" onchange="saveSettings()">
+            </div>
+            <div>
+                <label class="block font-bold mb-2">Upload Logo (Image)</label>
+                <input type="file" id="logo-upload" accept="image/*" class="w-full p-3 border border-dashed rounded-xl" onchange="handleLogo(event)">
+            </div>
+            <div>
+                <label class="block font-bold mb-2">Daily Stats</label>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-4 bg-orange-50 rounded-2xl"><p class="text-xs text-orange-600 font-bold">Total Orders Today</p><h4 id="stat-count" class="text-2xl font-bold">0</h4></div>
+                    <div class="p-4 bg-green-50 rounded-2xl"><p class="text-xs text-green-600 font-bold">Daily Revenue</p><h4 id="stat-revenue" class="text-2xl font-bold">₹0</h4></div>
+                </div>
+            </div>
         </div>
     </main>
 
     <script>
-        let cart = [];
-        let allOrders = [];
-        const menu = [
-            { id: 1, name: 'Espresso', price: 120, cat: 'Beverages', desc: 'Strong classic coffee.' },
-            { id: 2, name: 'Cappuccino', price: 180, cat: 'Beverages', desc: 'Steamed milk & thick foam.' },
-            { id: 3, name: 'Grilled Cheese', price: 250, cat: 'Food', desc: 'Melted cheddar on sourdough.' }
+        // --- DATA & STATE ---
+        let config = JSON.parse(localStorage.getItem('cafeConfig')) || { name: 'Brew & Bite Cafe', logo: '', pin: '1234' };
+        let menuItems = JSON.parse(localStorage.getItem('cafeMenu')) || [
+            { id: 1, name: 'Grilled Cheese', price: 250, cat: 'Food', stock: true },
+            { id: 2, name: 'Espresso', price: 120, cat: 'Beverages', stock: true }
         ];
+        let orders = [];
+        let cart = [];
+        let payMethod = 'UPI';
 
-        // Init Menu
-        const menuContainer = document.getElementById('menu-container');
-        let currentCat = '';
-        menu.forEach(item => {
-            if(item.cat !== currentCat) {
-                currentCat = item.cat;
-                menuContainer.innerHTML += `<h3 class="text-orange-500 font-bold uppercase mt-6 mb-4 border-l-4 border-orange-500 pl-3">${currentCat}</h3>`;
+        // --- INITIALIZATION ---
+        window.onload = () => {
+            applyConfig();
+            renderMenu();
+        };
+
+        function applyConfig() {
+            document.getElementById('header-name').innerText = config.name;
+            document.getElementById('entry-cafe-name').innerText = config.name;
+            document.getElementById('set-cafe-name').value = config.name;
+            if(config.logo) {
+                document.getElementById('main-logo').src = config.logo;
+                document.getElementById('main-logo').classList.remove('hidden');
+                document.getElementById('fallback-icon').classList.add('hidden');
+                document.getElementById('preview-logo-entry').innerHTML = `<img src="${config.logo}" class="w-full h-full rounded-full object-cover">`;
             }
-            menuContainer.innerHTML += `
-                <div onclick="addToCart(${item.id})" class="card p-5 flex justify-between items-center mb-3">
-                    <div><h4 class="font-bold">${item.name}</h4><p class="text-xs text-gray-400">${item.desc}</p></div>
-                    <span class="font-bold">₹${item.price}</span>
-                </div>
-            `;
-        });
+        }
 
-        function startSession() {
-            const name = document.getElementById('cust-name').value;
-            const table = document.getElementById('table-num').value;
-            if(!name || !table) return alert("Details bharo bhai!");
-            document.getElementById('auth-overlay').classList.add('hidden');
-            document.getElementById('display-user').innerText = `Table ${table} | ${name}`;
-            document.getElementById('display-user').classList.remove('hidden');
+        // --- CUSTOMER ACTIONS ---
+        function initCustomer() {
+            const n = document.getElementById('cust-name').value;
+            const t = document.getElementById('cust-table').value;
+            if(!n || !t) return alert("Bhai, Details dalo!");
+            document.getElementById('entry-screen').classList.add('hidden');
+        }
+
+        function renderMenu() {
+            const container = document.getElementById('menu-display');
+            container.innerHTML = '';
+            const cats = [...new Set(menuItems.map(i => i.cat))];
+            
+            cats.forEach(cat => {
+                let html = `<section><h3 class="text-orange-500 font-bold uppercase tracking-widest text-sm mb-4 border-l-4 border-orange-500 pl-3">${cat}</h3><div class="grid gap-4">`;
+                menuItems.filter(i => i.cat === cat).forEach(item => {
+                    html += `
+                        <div onclick="addToCart(${item.id})" class="bg-white p-5 rounded-2xl shadow-sm border border-gray-50 flex justify-between items-center cursor-pointer hover:border-orange-200 hover:shadow-md transition">
+                            <div><h4 class="font-bold text-zinc-800">${item.name}</h4><p class="text-xs text-gray-400">Freshly prepared</p></div>
+                            <span class="font-bold text-lg">₹${item.price}</span>
+                        </div>`;
+                });
+                html += `</div></section>`;
+                container.innerHTML += html;
+            });
+            updateAdminMenuList();
         }
 
         function addToCart(id) {
-            const item = menu.find(m => m.id === id);
+            const item = menuItems.find(i => i.id === id);
             cart.push(item);
-            renderCart();
+            updateCartUI();
         }
 
-        function renderCart() {
-            const container = document.getElementById('cart-items');
-            const footer = document.getElementById('cart-footer');
+        function updateCartUI() {
+            const list = document.getElementById('cart-list');
+            const summary = document.getElementById('cart-summary');
             document.getElementById('cart-count').innerText = cart.length;
+            
             if(cart.length === 0) {
-                container.innerHTML = "Hungry? Add something!";
-                footer.classList.add('hidden');
+                list.innerHTML = '<p class="text-gray-400 text-center py-10">Cart is empty</p>';
+                summary.classList.add('hidden');
                 return;
             }
-            footer.classList.remove('hidden');
-            container.innerHTML = '';
-            let total = 0;
-            cart.forEach(item => {
-                total += item.price;
-                container.innerHTML += `<div class="flex justify-between text-sm mb-2 font-medium"><span>${item.name}</span><span>₹${item.price}</span></div>`;
-            });
-            document.getElementById('cart-total').innerText = '₹' + total;
-        }
 
-        function placeOrder() {
-            const name = document.getElementById('cust-name').value;
-            const table = document.getElementById('table-num').value;
-            const order = { name, table, items: [...cart], time: new Date().toLocaleTimeString() };
-            allOrders.push(order);
-            alert("Order Placed! Rasoi mein kaam shuru ho gaya hai.");
-            cart = [];
-            renderCart();
-            updateStaffPanel();
-        }
-
-        // Staff Logic
-        function openPinModal() { document.getElementById('pin-modal').classList.remove('hidden'); }
-        function closePinModal() { document.getElementById('pin-modal').classList.add('hidden'); }
-        function verifyPin() {
-            if(document.getElementById('staff-pin').value === '1234') {
-                document.getElementById('customer-view').classList.add('hidden');
-                document.getElementById('staff-view').classList.remove('hidden');
-                closePinModal();
-            } else {
-                document.getElementById('pin-error').classList.remove('hidden');
-            }
-        }
-        function exitStaff() {
-            document.getElementById('staff-view').classList.add('hidden');
-            document.getElementById('customer-view').classList.remove('hidden');
-        }
-        function updateStaffPanel() {
-            const list = document.getElementById('orders-list');
-            if(allOrders.length === 0) return;
+            summary.classList.remove('hidden');
             list.innerHTML = '';
-            allOrders.forEach(order => {
-                list.innerHTML += `
-                    <div class="bg-white p-4 rounded-xl border-l-8 border-orange-400 shadow-sm">
-                        <div class="flex justify-between border-bottom pb-2 mb-2 border-dashed border-gray-200">
-                            <span class="font-bold">Table ${order.table} - ${order.name}</span>
-                            <span class="text-xs text-gray-400">${order.time}</span>
-                        </div>
-                        <div class="text-sm text-gray-600">${order.items.map(i => i.name).join(', ')}</div>
-                    </div>
-                `;
+            let total = 0;
+            cart.forEach((item, idx) => {
+                total += item.price;
+                list.innerHTML += `<div class="flex justify-between text-sm"><span>${item.name}</span><span class="font-bold">₹${item.price}</span></div>`;
             });
+            document.getElementById('total-price').innerText = '₹' + total;
         }
+
+        function setPayment(method) {
+            payMethod = method;
+            document.getElementById('pay-upi').className = method === 'UPI' ? 'p-3 border-2 rounded-xl text-sm font-bold border-orange-400 bg-orange-50' : 'p-3 border-2 rounded-xl text-sm font-bold border-gray-200';
+            document.getElementById('pay-cash').className = method === 'CASH' ? 'p-3 border-2 rounded-xl text-sm font-bold border-orange-400 bg-orange-50' : 'p-3 border-2 rounded-xl text-sm font-bold border-gray-200';
+        }
+
+        function submitOrder() {
+            const name = document.getElementById('cust-name').value;
+            const table = document.getElementById('cust-table').value;
+            const order = {
+                id: Date.now(),
+                name, table, items: [...cart], 
+                total: cart.reduce((a,b) => a + b.price, 0),
+                pay: payMethod, time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+            };
+            orders.unshift(order);
+            alert(`Order Placed via ${payMethod}!`);
+            cart = [];
+            updateCartUI();
+            updateStaffOrders();
+            updateStats();
+        }
+
+        // --- STAFF PANEL LOGIC ---
+        function showPinModal() { document.getElementById('pin-modal').classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById('pin-modal').classList.add('hidden'); }
+        
+        function checkPin() {
+            if(document.getElementById('pin-input').value === config.pin) {
+                document.getElementById('customer-ui').classList.add('hidden');
+                document.getElementById('staff-ui').classList.remove('hidden');
+                closeModal();
+                switchTab('orders');
+            } else { alert("Wrong PIN!"); }
+        }
+
+        function switchTab(tab) {
+            ['orders', 'menu-mgt', 'settings'].forEach(t => {
+                document.getElementById('sec-' + t).classList.add('hidden');
+                document.getElementById('tab-' + t).className = 'pb-4 font-bold text-gray-400';
+            });
+            document.getElementById('sec-' + tab).classList.remove('hidden');
+            document.getElementById('tab-' + tab).className = 'pb-4 font-bold active-tab';
+        }
+
+        function updateStaffOrders() {
+            const container = document.getElementById('sec-orders');
+            if(orders.length === 0) { container.innerHTML = '<p class="text-gray-400">No live orders.</p>'; return; }
+            container.innerHTML = orders.map(o => `
+                <div class="bg-white p-6 rounded-3xl shadow-sm border-l-8 border-orange-400">
+                    <div class="flex justify-between mb-4"><span class="font-bold">Table ${o.table} - ${o.name}</span><span class="text-xs font-bold bg-zinc-100 px-2 py-1 rounded-full">${o.pay}</span></div>
+                    <div class="text-sm text-gray-600 mb-4">${o.items.map(i => i.name).join(', ')}</div>
+                    <div class="flex justify-between items-center pt-4 border-t border-dashed">
+                        <span class="font-bold text-orange-600 text-lg">₹${o.total}</span>
+                        <span class="text-xs text-gray-400">${o.time}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addNewItem() {
+            const name = document.getElementById('new-name').value;
+            const price = parseInt(document.getElementById('new-price').value);
+            const cat = document.getElementById('new-cat').value;
+            if(!name || !price) return;
+            menuItems.push({ id: Date.now(), name, price, cat, stock: true });
+            localStorage.setItem('cafeMenu', JSON.stringify(menuItems));
+            renderMenu();
+            document.getElementById('new-name').value = '';
+            document.getElementById('new-price').value = '';
+        }
+
+        function updateAdminMenuList() {
+            const list = document.getElementById('admin-menu-list');
+            list.innerHTML = menuItems.map(item => `
+                <div class="py-4 flex justify-between items-center">
+                    <div><span class="font-bold">${item.name}</span> <span class="text-xs text-gray-400">(${item.cat})</span></div>
+                    <div class="flex items-center gap-4 font-bold">₹${item.price} <button onclick="deleteItem(${item.id})" class="text-red-500 text-xl">×</button></div>
+                </div>
+            `).join('');
+        }
+
+        function deleteItem(id) {
+            menuItems = menuItems.filter(i => i.id !== id);
+            localStorage.setItem('cafeMenu', JSON.stringify(menuItems));
+            renderMenu();
+        }
+
+        // --- SETTINGS ---
+        function handleLogo(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = () => { config.logo = reader.result; saveSettings(); };
+            reader.readAsDataURL(file);
+        }
+
+        function saveSettings() {
+            config.name = document.getElementById('set-cafe-name').value;
+            localStorage.setItem('cafeConfig', JSON.stringify(config));
+            applyConfig();
+        }
+
+        function updateStats() {
+            document.getElementById('stat-count').innerText = orders.length;
+            document.getElementById('stat-revenue').innerText = '₹' + orders.reduce((a,b) => a + b.total, 0);
+        }
+
+        function logoutStaff() { location.reload(); }
     </script>
 </body>
 </html>
